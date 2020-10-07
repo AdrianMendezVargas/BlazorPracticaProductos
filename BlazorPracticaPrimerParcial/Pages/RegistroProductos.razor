@@ -1,0 +1,114 @@
+﻿@page "/registro-productos"
+@inject IToastService toast
+
+<div class="container">
+    <div class="card shadow-lg">
+        <div class="card-header bg-info">
+            <h3>Registro productos</h3>
+        </div>
+        <div class="card-body">
+            <EditForm id="form" Model="producto" OnValidSubmit="Guardar">
+
+                <div class="form-group row">
+                    <label class="col col-form-label">Producto id:</label>
+                    <div class="col-sm-10 form-inline">
+                        <InputNumber @bind-Value="producto.Id" class="form-control" />
+                        <button type="button" class="btn btn-outline-primary ml-3" @onclick="Buscar">Buscar</button>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label class="col col-form-label">Descripcion:</label>
+                    <div class="col-sm-10">
+                        <InputText class="form-control" @bind-Value="producto.Descripcion" />
+                        <ValidationMessage For="()=>producto.Descripcion" />
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label class="col col-form-label">Precio:</label>
+                    <div class="col-sm-10">
+                        <InputNumber class="form-control" @bind-Value="producto.Precio" />
+                        <ValidationMessage For="()=>producto.Precio" />
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label class="col col-form-label">Existencia:</label>
+                    <div class="col-sm-10">
+                        <InputNumber class="form-control" @bind-Value="producto.Existencia" />
+                        <ValidationMessage For="()=>producto.Existencia" />
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label class="col col-form-label">Valor en inventario:</label>
+                    <div class="col-sm-10">
+                        <input class="form-control" readonly value="@producto.ValorInventario" />
+                    </div>
+                </div>
+
+                <DataAnnotationsValidator />
+            </EditForm>
+        </div>
+        <div class="card-footer text-center">
+            <button class="btn btn-outline-dark" @onclick="Nuevo">Nuevo</button>
+            <input type="submit" form="form" class="btn btn-outline-success" value="Guardar" />
+            <button class="btn btn-outline-danger" @onclick="Eliminar">Eliminar</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    Producto producto = new Producto();
+
+    void Nuevo() => producto = new Producto();
+
+    async Task Guardar() {
+
+        bool guardo = await ProductosBLL.Guardar(producto);
+
+        if (guardo) {
+            toast.ShowSuccess("Guardado ");
+            Nuevo();
+        } else
+            toast.ShowError("Error al guardar");
+    }
+
+    async Task Eliminar() {
+
+        if (await Existe()) {
+
+            bool eliminado = await ProductosBLL.Eliminar(producto.Id);
+
+            if (eliminado) {
+                toast.ShowSuccess("Eliminado");
+                Nuevo();
+            } else
+                toast.ShowError("Error al eliminar");
+
+        } else {
+            toast.ShowWarning("Este producto no existe");
+        }
+
+    }
+
+    async Task Buscar() {
+
+        var productoBuscado = await ProductosBLL.Buscar(producto.Id);
+
+        if (productoBuscado != null) {
+            producto = productoBuscado;
+        } else {
+            toast.ShowWarning("No encontrado");
+            Nuevo();
+        }
+    }
+
+    async Task<bool> Existe() {
+        var productoBuscado = await ProductosBLL.Buscar(producto.Id);
+        return productoBuscado != null;
+    }
+
+
+}
